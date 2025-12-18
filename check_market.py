@@ -1,5 +1,5 @@
 # 自動抓取加權指數 (^TWII)，判斷是否符合短波段交易條件
-# 條件：
+# 加權指數條件：
 # 1. 連續 2 天收盤價在 MA20 之上
 # 2. MA20 走平或向上
 '''
@@ -291,10 +291,10 @@ if __name__ == "__main__":
   msg += check_taiex_monthline(df)  
 
   symbol_list = ["0050.TW", "2317.TW"]
-  official = True
+  test = True
   
   for symbol in symbol_list :
-    if official :
+    if test == False :
       # 抓近 30 天資料
       df = yf.download(symbol, period="1mo", interval="1d", auto_adjust=False, progress=False)
       df = df.dropna()
@@ -309,4 +309,4 @@ if __name__ == "__main__":
       print(f"\n最近 {result['total_signals']} 個信號：")
       print(df_backtest[df_backtest['Signal']].tail(result['total_signals'])[['Close','Buy_Price','Stop_Loss','Take_Profit']])
   print(msg)
-  #broadcast_message(msg)
+  broadcast_message(msg)
