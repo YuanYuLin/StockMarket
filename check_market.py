@@ -60,13 +60,21 @@ def send_line_message(message: str) -> None:
   if r.status_code != 200:
     raise RuntimeError(f"LINE push failed: {r.text}")
 
-def check_breakout(symbol, recent):
-
+def check_breakout(symbol, df):
+    '''
+    # 取最近 6 天（5 天整理 + 今天）
+    recent = df.iloc[-6:]
     today = recent.iloc[-1]
     base = recent.iloc[:-1]  # 前 5 天
+    '''
+    recent = df.iloc[-21:] # 取 21 天資料
+    today = recent.iloc[-1]
+    base = recent.iloc[-21:-1] # 前 20 天作為基地
 
     high = base["High"].max()
     low = base["Low"].min()
+    # 成交量條件
+    avg_vol = base["Volume"].mean()
 
     # 整理區震幅
     range_pct = (high - low) / low
@@ -82,12 +90,9 @@ def check_breakout(symbol, recent):
     else:
       distance_msg = f"已突破 {abs(distance_pct)}%"
 
-    # 成交量條件
-    avg_vol = base["Volume"].mean()
-
     is_breakout = (today["Close"] > high).item()
     is_consolidating = (range_pct <= 0.08).item()
-    is_volume_ok = (today["Volume"] >= avg_vol * 1.3).item()
+    is_volume_ok = (today["Volume"] >= avg_vol * 1.5).item()
 
     res = {
         "date": today.name.date(),
@@ -299,9 +304,7 @@ if __name__ == "__main__":
       df = yf.download(symbol, period="1mo", interval="1d", auto_adjust=False, progress=False)
       df = df.dropna()
 
-      # 取最近 6 天（5 天整理 + 今天）
-      recent = df.iloc[-6:]
-      res = check_breakout(symbol, recent)
+      res = check_breakout(symbol, df)
       msg += getMsg(symbol, res)
     else:
       df_backtest, result = backtest_check_breakout(symbol, 12)
